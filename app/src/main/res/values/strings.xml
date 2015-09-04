@@ -31,9 +31,11 @@
     <string name="title_section1">Hourly</string>
     <string name="title_section2">your city</string>
     <string name="title_section3">Daily</string>
-    <string name="google_maps_key" translatable="false" templateMergeStrategy="preserve">
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
         AIzaSyD4jjt5_7kT1okffkQhaUXg0_75nVUALIQ
     </string>
     <string name="error_occured">An unexpected error occured. Please try again.</string>
+    <string name="drawer_open">Open navigation drawer</string>
+    <string name="drawer_close">Close navigation drawer</string>
 
 </resources>

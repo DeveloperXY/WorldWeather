@@ -11,11 +11,16 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -75,6 +80,14 @@ public class MainWeatherFragment extends Fragment {
     ProgressBar mProgressBar;
     @Bind(R.id.locationLabel)
     TextView mLocationLabel;
+    @Bind(R.id.navList)
+    ListView mDrawerList;
+    @Bind(R.id.drawer_layout)
+    DrawerLayout mDrawerLayout;
+    @Bind(R.id.drawerIcon)
+    ImageView mDrawerIcon;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private ArrayAdapter<String> mAdapter;
     private OnMainFragmentInteractionListener mMainListener;
     private Forecast mForecast; // data model that holds the whole forecast info
     private Location mLocation; // current user location or more precisely, the user's last known location
@@ -97,6 +110,27 @@ public class MainWeatherFragment extends Fragment {
 
         }
     };
+
+    private void setupDrawer() {
+        mDrawerToggle = new ActionBarDrawerToggle(getActivity(), mDrawerLayout,
+                R.string.drawer_open, R.string.drawer_close) {
+
+            /** Called when a drawer has settled in a completely open state. */
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                getActivity().invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            /** Called when a drawer has settled in a completely closed state. */
+            public void onDrawerClosed(View view) {
+                super.onDrawerClosed(view);
+                getActivity().invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+
+        mDrawerToggle.setDrawerIndicatorEnabled(true);
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -154,6 +188,8 @@ public class MainWeatherFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         setRetainInstance(true);
+        addDrawerItems();
+        setupDrawer();
     }
 
     @Override
@@ -174,6 +210,12 @@ public class MainWeatherFragment extends Fragment {
         mProgressBar.setVisibility(View.INVISIBLE);
         // The refresh icon's click listener
         mRefreshImageView.setOnClickListener(mOnRefreshClickListener);
+        mDrawerIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDrawerLayout.openDrawer(mDrawerList);
+            }
+        });
     }
 
     @Override
@@ -203,9 +245,25 @@ public class MainWeatherFragment extends Fragment {
     }
 
     @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onDetach() {
         super.onDetach();
         mMainListener = null;
+    }
+
+    private void addDrawerItems() {
+        String[] osArray = {"Android", "iOS", "Windows", "OS X", "Linux"};
+        mAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, osArray);
+        mDrawerList.setAdapter(mAdapter);
     }
 
     private void toggleRefresh() {
@@ -451,9 +509,9 @@ public class MainWeatherFragment extends Fragment {
      */
     public interface OnMainFragmentInteractionListener {
         // TODO: Update argument type and name
-        public void onMainFragmentInteraction(int task);
+        void onMainFragmentInteraction(int task);
 
-        public void sendForecastToActivity(Forecast forecast);
+        void sendForecastToActivity(Forecast forecast);
     }
 
 }
