@@ -11,10 +11,16 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -22,6 +28,7 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.spartech.worldweather.R;
+import com.spartech.worldweather.adapters.MyAdapter;
 import com.spartech.worldweather.utils.FragmentActivityInterfaceConstants;
 import com.spartech.worldweather.utils.State;
 import com.spartech.worldweather.utils.save.MainFragSave;
@@ -75,10 +82,25 @@ public class MainWeatherFragment extends Fragment {
     ProgressBar mProgressBar;
     @Bind(R.id.locationLabel)
     TextView mLocationLabel;
+    //    @Bind(R.id.navList)
+//    ListView mDrawerList;
+    @Bind(R.id.drawer_layout)
+    DrawerLayout mDrawerLayout;
+    @Bind(R.id.drawerIcon)
+    ImageView mDrawerIcon;
+    @Bind(R.id.RecyclerView)
+    RecyclerView mRecyclerView;                           // Declaring RecyclerView
+    RecyclerView.Adapter mRecyclerAdapter;                        // Declaring Adapter For Recycler View
+    RecyclerView.LayoutManager mLayoutManager;
+    String TITLES[] = {"Home", "Around the World"};
+    private ActionBarDrawerToggle mDrawerToggle;
+    private ArrayAdapter<String> mAdapter;
     private OnMainFragmentInteractionListener mMainListener;
     private Forecast mForecast; // data model that holds the whole forecast info
-    private Location mLocation; // current user location or more precisely, the user's last known location
 
+    //First We Declare Titles And Icons For Our Navigation Drawer List View
+    //This Icons And Titles Are holded in an Array as you can see
+    private Location mLocation; // current user location or more precisely, the user's last known location
     // Click Listener for the Refresh button
     private View.OnClickListener mOnRefreshClickListener = new View.OnClickListener() {
         @Override
@@ -97,6 +119,42 @@ public class MainWeatherFragment extends Fragment {
 
         }
     };
+
+    private void setupDrawer() {
+        mRecyclerView.setHasFixedSize(true);                            // Letting the system know that the list objects are of fixed size
+
+        mRecyclerAdapter = new MyAdapter(getActivity(), TITLES, mTemperatureLabel.getText().toString(), mSummaryLabel.getText().toString());       // Creating the Adapter of MyAdapter class(which we are going to see in a bit)
+        // And passing the titles,icons,header view name, header view email,
+        // and header view profile picture
+
+        mRecyclerView.setAdapter(mRecyclerAdapter);                              // Setting the adapter to RecyclerView
+
+        mLayoutManager = new LinearLayoutManager(getActivity());                 // Creating a layout Manager
+
+        mRecyclerView.setLayoutManager(mLayoutManager);                 // Setting the layout Manager
+
+        // Drawer object Assigned to the view
+        mDrawerToggle = new ActionBarDrawerToggle(getActivity(), mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                // Hide Pager Title Strip
+                mMainListener.onMainFragmentInteraction(FragmentActivityInterfaceConstants.DISABLE_PAGER_TITLESTRIP);
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                // Show Pager Title Strip
+                mMainListener.onMainFragmentInteraction(FragmentActivityInterfaceConstants.ENABLE_PAGER_TITLESTRIP);
+            }
+
+
+        }; // Drawer Toggle Object Made
+        mDrawerLayout.setDrawerListener(mDrawerToggle); // Drawer Listener set to the Drawer toggle
+        mDrawerToggle.syncState();
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -121,6 +179,8 @@ public class MainWeatherFragment extends Fragment {
             mTemperatureLabel.setText(save.getTemperature());
             mIconImageView.setImageDrawable(getResources().getDrawable(Forecast.getIconId(save.getIcon())));
         }
+
+        setupDrawer();
     }
 
     // Save the recent activity's state
@@ -146,7 +206,7 @@ public class MainWeatherFragment extends Fragment {
         String json = gson.toJson(save);
 
         editor.putString(MAIN_FRAGMENT_SAVE, json);
-        editor.commit();
+        editor.apply();
     }
 
     @Override
@@ -154,6 +214,7 @@ public class MainWeatherFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         setRetainInstance(true);
+        setupDrawer();
     }
 
     @Override
@@ -174,6 +235,12 @@ public class MainWeatherFragment extends Fragment {
         mProgressBar.setVisibility(View.INVISIBLE);
         // The refresh icon's click listener
         mRefreshImageView.setOnClickListener(mOnRefreshClickListener);
+        mDrawerIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDrawerLayout.openDrawer(mRecyclerView);
+            }
+        });
     }
 
     @Override
@@ -202,10 +269,31 @@ public class MainWeatherFragment extends Fragment {
         }
     }
 
+    public boolean isDrawerOpened() {
+        Log.i(TAG, "drawer state = " + mDrawerLayout.isDrawerOpen(mRecyclerView));
+        return mDrawerLayout.isDrawerOpen(mRecyclerView);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
     @Override
     public void onDetach() {
         super.onDetach();
         mMainListener = null;
+    }
+
+    public void closeDrawer() {
+        if (mDrawerLayout.isDrawerVisible(mRecyclerView)) {
+            mDrawerLayout.closeDrawer(mRecyclerView);
+        }
     }
 
     private void toggleRefresh() {
@@ -216,10 +304,6 @@ public class MainWeatherFragment extends Fragment {
             mProgressBar.setVisibility(View.INVISIBLE);
             mRefreshImageView.setVisibility(View.VISIBLE);
         }
-    }
-
-    public void toggleRefreshEnabled(boolean state) {
-        mRefreshImageView.setEnabled(state);
     }
 
     public void handleNewLocation(Location location) {
@@ -437,6 +521,7 @@ public class MainWeatherFragment extends Fragment {
 
         Drawable drawable = getResources().getDrawable(current.getIconId());
         mIconImageView.setImageDrawable(drawable);
+        setupDrawer();
     }
 
     /**
@@ -451,9 +536,9 @@ public class MainWeatherFragment extends Fragment {
      */
     public interface OnMainFragmentInteractionListener {
         // TODO: Update argument type and name
-        public void onMainFragmentInteraction(int task);
+        void onMainFragmentInteraction(int task);
 
-        public void sendForecastToActivity(Forecast forecast);
+        void sendForecastToActivity(Forecast forecast);
     }
 
 }
