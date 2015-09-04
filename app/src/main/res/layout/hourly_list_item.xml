@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:background="@drawable/bg_border"
+                tools:background="#01579B"
+    >
+
+    <TextView
+        android:id="@+id/timeLabel"
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
+        android:layout_alignBottom="@+id/iconImageView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignTop="@+id/iconImageView"
+        android:background="#ff000000"
+        android:gravity="center|center_horizontal"
+        android:paddingTop="5dp"
+        android:textColor="#ffffffff"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        tools:text="12 PM"/>
+
+    <ImageView
+        android:id="@+id/iconImageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="10dp"
+        android:layout_toRightOf="@+id/timeLabel"
+        android:paddingBottom="5dp"
+        android:paddingTop="5dp"
+        android:src="@drawable/partly_cloudy"/>
+
+    <TextView
+        android:id="@+id/summaryLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="20dp"
+        android:layout_toRightOf="@+id/iconImageView"
+        android:gravity="center"
+        android:textColor="#ffffffff"
+        tools:text="Partly cloudy"/>
+
+    <TextView
+        android:id="@+id/dailyTemperatureLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/iconImageView"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@+id/iconImageView"
+        android:layout_centerVertical="true"
+        android:gravity="center|center_horizontal"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:textColor="#ffffffff"
+        android:textSize="24sp"
+        tools:text="100"/>
+
+</RelativeLayout>

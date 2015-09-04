@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginRight="5dp"
+                android:background="@drawable/bg_border"
+                android:gravity="top|center|center_horizontal">
+
+
+    <LinearLayout
+        android:id="@+id/timeLayout"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_alignRight="@+id/summaryLabel"
+        android:layout_alignLeft="@+id/summaryLabel"
+        android:background="#ff000000">
+
+        <TextView
+            android:id="@+id/timeLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#ffffffff"
+            android:textSize="20sp"
+            tools:text="12 PM"
+            android:gravity="center"
+            android:paddingBottom="5dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:textStyle="bold"
+            android:paddingTop="5dp"
+            android:autoText="true"/>
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/iconImageView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/timeLayout"
+        android:src="@drawable/partly_cloudy"
+        android:layout_marginTop="10dp"
+        android:layout_centerHorizontal="true"/>
+
+    <TextView
+        android:id="@+id/summaryLabel"
+        android:layout_width="70dp"
+        android:layout_height="wrap_content"
+        android:textColor="#ffffffff"
+        tools:text="Partly cloudy"
+        android:gravity="center"
+        android:layout_centerInParent="true"
+        android:padding="10dp"/>
+
+    <TextView
+        android:id="@+id/dailyTemperatureLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#ffffffff"
+        android:textSize="24sp"
+        tools:text="100"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:layout_marginBottom="10dp"/>
+
+</RelativeLayout>
