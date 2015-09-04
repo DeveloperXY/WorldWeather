@@ -1,7 +1,5 @@
 package com.spartech.worldweather.ui;
 
-import java.util.Locale;
-
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -9,17 +7,19 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.os.Bundle;
+import android.support.v4.view.PagerTitleStrip;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.util.SparseArray;
@@ -30,15 +30,18 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.gson.Gson;
 import com.spartech.worldweather.R;
 import com.spartech.worldweather.adapters.SmartFragmentStatePagerAdapter;
 import com.spartech.worldweather.ui.fragments.DailyForecastFragment;
 import com.spartech.worldweather.ui.fragments.HourlyForecastFragment;
 import com.spartech.worldweather.ui.fragments.MainWeatherFragment;
 import com.spartech.worldweather.utils.FragmentActivityInterfaceConstants;
-import com.spartech.worldweather.utils.viewpagertransformers.DepthPageTransformer;
+import com.spartech.worldweather.utils.save.MainActivitySave;
 import com.spartech.worldweather.utils.viewpagertransformers.ZoomOutPageTransformer;
 import com.spartech.worldweather.weather.Forecast;
+
+import java.util.Locale;
 
 
 public class MainActivity extends FragmentActivity implements // Google Maps API interfaces
@@ -78,11 +81,43 @@ public class MainActivity extends FragmentActivity implements // Google Maps API
     private AlertDialog.Builder mDialogBuilder;
     private AlertDialog mAlertDialog; // an alert dialog displayed in case of no connectivity
     private ConnectionReceiver mConnectionReceiver;
+    private PagerTitleStrip mPagerTitleStrip;
     //  the Activity's UI from within the connection broadcast receiver
     private Forecast mForecast;
 
     public static MainActivity getInstance() { // MainActivity's static instance getter
         return ins;
+    }
+
+    private void restoreComplexPreferences() {
+        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = sharedPreferences.getString(MAIN_ACTIVITY_SAVE, "");
+        MainActivitySave save = gson.fromJson(json, MainActivitySave.class);
+
+        if (save != null) {
+            Log.i(TAG, "drawer final state is ------ " + save.isDrawerOpen());
+            if (!save.isDrawerOpen())
+                mPagerTitleStrip.setBackgroundColor(Color.parseColor("#01579B"));
+            else
+                mPagerTitleStrip.setBackgroundColor(Color.parseColor("#039BE5"));
+        }
+
+    }
+
+    // Save the recent activity's state
+    private void saveComplexPreferences() {
+        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        MainActivitySave save = new MainActivitySave(
+                mPagerAdapter.getMainWeatherFragment().isDrawerOpened()
+        );
+
+        String json = gson.toJson(save);
+
+        editor.putString(MAIN_ACTIVITY_SAVE, json);
+        editor.apply();
     }
 
     @Override
@@ -92,6 +127,7 @@ public class MainActivity extends FragmentActivity implements // Google Maps API
         setContentView(R.layout.activity_main);
 
         getWindow().getDecorView().setBackgroundDrawable(getResources().getDrawable(R.drawable.bg_blue_gradient));
+        mPagerTitleStrip = (PagerTitleStrip) findViewById(R.id.pager_title_strip);
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -131,6 +167,7 @@ public class MainActivity extends FragmentActivity implements // Google Maps API
     @Override
     protected void onResume() {
         super.onResume();
+        restoreComplexPreferences();
         if (mConnectionReceiver == null) {
             mConnectionReceiver = new ConnectionReceiver(new Handler()); // Create the receiver
             registerReceiver(mConnectionReceiver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)); // Register receiver
@@ -144,6 +181,8 @@ public class MainActivity extends FragmentActivity implements // Google Maps API
         if (mAlertDialog != null)
             if (mAlertDialog.isShowing())
                 mAlertDialog.dismiss();
+
+        saveComplexPreferences();
     }
 
     @Override
@@ -152,6 +191,25 @@ public class MainActivity extends FragmentActivity implements // Google Maps API
 
         mGoogleApiClient.disconnect();
         unregisterReceiver(mConnectionReceiver);
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        int currentFragment = mViewPager.getCurrentItem();
+
+        switch (currentFragment) {
+            case 0:
+            case 2:
+                mViewPager.setCurrentItem(1);
+                break;
+            case 1:
+                if (mPagerAdapter.getMainWeatherFragment().isDrawerOpened())
+                    mPagerAdapter.getMainWeatherFragment().closeDrawer();
+                else
+                    super.onBackPressed();
+                break;
+        }
     }
 
     @Override
@@ -179,11 +237,17 @@ public class MainActivity extends FragmentActivity implements // Google Maps API
                     mGoogleApiClient.disconnect();
                 }
                 break;
+            case FragmentActivityInterfaceConstants.DISABLE_PAGER_TITLESTRIP:
+                mPagerTitleStrip.setBackgroundColor(Color.parseColor("#039BE5"));
+                break;
+            case FragmentActivityInterfaceConstants.ENABLE_PAGER_TITLESTRIP:
+                mPagerTitleStrip.setBackgroundColor(Color.parseColor("#01579B"));
+                break;
         }
     }
 
     @Override
-    public void sendForecastToActivity(Forecast forecast) { // TMainActivity receives the whole forecast from the main fragment
+    public void sendForecastToActivity(Forecast forecast) { // MainActivity receives the whole forecast from the main fragment
         // and stores it so that it would be available to all other fragments
         Log.i(TAG, "sendForecastToActivity is called");
         if (forecast != null) {
@@ -205,7 +269,9 @@ public class MainActivity extends FragmentActivity implements // Google Maps API
     @Override
     public void onPageSelected(int position) {
         // TODO Use the interface tasks to send data from MainActivity to Hourly & Daily Fragments
-
+        if (position != 1) {
+            mPagerAdapter.getMainWeatherFragment().closeDrawer();
+        }
     }
 
     @Override
@@ -224,11 +290,25 @@ public class MainActivity extends FragmentActivity implements // Google Maps API
         Log.i(TAG, "Main Activity startLocationUpdates method is done.");
     }
 
+    private boolean isNetworkAvailable() {
+
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = manager.getActiveNetworkInfo();
+        boolean isAvailable = false;
+
+        if (networkInfo != null && networkInfo.isConnected()) {
+            isAvailable = true;
+        }
+
+        return isAvailable;
+    }
+
     // this method is automatically executed once the GoogleAPIClient is connected
     @Override
     public void onConnected(Bundle bundle) {
         Log.i(TAG, "CONNECTEDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-        startLocationUpdates();
+        if (isNetworkAvailable())
+            startLocationUpdates();
     }
 
     @Override
@@ -239,7 +319,7 @@ public class MainActivity extends FragmentActivity implements // Google Maps API
     @Override
     public void onLocationChanged(Location location) {
         if (location.getLatitude() != mLocation.getLatitude() || location.getLongitude() != mLocation.getLongitude())
-            mPagerAdapter.mMainWeatherFragment.handleNewLocation(location);
+            SectionsPagerAdapter.mMainWeatherFragment.handleNewLocation(location);
     }
 
     @Override
